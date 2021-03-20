@@ -36,7 +36,7 @@ async function medium(req, res) {
 }
 
 async function listPageScrapM(listLink, pages) {
-	if (pages < 200 && listLink.length > page) listLink.length = pages;
+	if (pages < 200 && listLink.length > pages) listLink.length = pages;
 	let browserLink = await startBrowser();
 
 	let dataArray = [];
@@ -106,21 +106,21 @@ async function listPageScrapM(listLink, pages) {
 	}
 	await browserLink.close();
 
-	// fs.writeFile("medium.json", JSON.stringify(dataArray), function (err) {
-	// 	if (err) return console.log(err);
-	// 	console.log("medium 200 page done...");
-	// });
+	fs.writeFile("./output/medium.json", JSON.stringify(dataArray), function (err) {
+		if (err) return console.log(err);
+		console.log(`medium ${listLink.length} page done...`);
+	});
 	return dataArray;
 }
 
 async function autoScroll(page) {
 	await page.evaluate(async () => {
 		await new Promise((resolve, reject) => {
-			let distance = 200;
+			let distance = 150;
 			let count = 0;
 			let timer = setInterval(() => {
 				window.scrollBy(0, distance);
-				if (count > 400) {
+				if (count > 500) {
 					clearInterval(timer);
 					resolve();
 				}

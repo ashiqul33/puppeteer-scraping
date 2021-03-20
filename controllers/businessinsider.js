@@ -38,7 +38,7 @@ async function businessinsider(req, res) {
 }
 
 async function listPageScrapB(listLink, pages) {
-  if (pages < 200 && listLink.length > page) listLink.length = pages;
+  if (pages < 200 && listLink.length > pages) listLink.length = pages;
   let browserLink = await startBrowser();
 
   let dataArray = [];
@@ -96,6 +96,11 @@ async function listPageScrapB(listLink, pages) {
     }
   }
   await browserLink.close();
+
+  fs.writeFile("./output/businessinsider.json", JSON.stringify(dataArray), function (err) {
+    if (err) return console.log(err);
+    console.log(`medium ${listLink.length} page done...`);
+  });
   return dataArray;
 }
 
