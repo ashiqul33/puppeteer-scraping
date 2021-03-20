@@ -11,6 +11,15 @@ const fs = require('fs');
 	try {
 		const page = await browser.newPage();
 		await page.setViewport({ width: 1366, height: 800 });
+		await page.setRequestInterception(true);
+		page.on('request', (req) => {
+			if (req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image') {
+				req.abort();
+			}
+			else {
+				req.continue();
+			}
+		});
 		await page.goto("https://medium.com", { waitUntil: "networkidle2" });
 		await autoScroll(page);
 
@@ -35,7 +44,7 @@ const fs = require('fs');
 		await browser.close();
 	}
 
-	// listLink.length = 5;
+	// listLink.length = 1;
 	let browserLink = await puppeteer.launch({
 		userDataDir: "./cache",
 		args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
@@ -50,38 +59,66 @@ const fs = require('fs');
 	const COVER_IMG = "#root > div > div.s > article > div > section > div figure div.s > img";
 	const TEXT = "#root > div > div.s > article > div > section > div > div > p";
 	for (let i = 0; i < listLink.length; i++) {
-		const page = await browserLink.newPage();
-		await page.setViewport({ width: 1366, height: 800 });
-		await page.goto(listLink[i].link, { waitUntil: "networkidle2" });
-		let head = await page.$eval(HEAD_LINK, el => el.textContent.trim());
-		let author = await page.$eval(AUTHOR_LINK, el => el.textContent.trim());
-		let date_read = await page.$eval(DATE_READ_LINK, el => el.textContent.trim());
-		let [date, read] = date_read.split("·");
-		let auth_img = await page.$eval(AUTHOR_IMG, el => el.src);
-		let cover_img = i > 0 ? await page.$eval(COVER_IMG, el => el.src) : "";
-		let text = await page.$$eval(TEXT, el => {
-			let para = [];
-			for (let i = 0; i < el.length; i++) {
-				para.push({
-					id: "text-"+(i+1),
-					value: el[i].textContent,
-				});
+		try {
+			const page = await browserLink.newPage();
+			await page.setViewport({ width: 1366, height: 800 });
+			await page.setRequestInterception(true);
+			page.on('request', (req) => {
+				if (req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image') {
+					req.abort();
+				}
+				else {
+					req.continue();
+				}
+			});
+			await page.goto(listLink[i].link, { waitUntil: "networkidle2" });
+			let head = await page.$eval(HEAD_LINK, el => el.textContent.trim());
+			let author = await page.$eval(AUTHOR_LINK, el => el.textContent.trim());
+			let date_read = await page.$eval(DATE_READ_LINK, el => el.textContent.trim());
+			let [date, read] = date_read.split("·");
+			let auth_img, cover_img;
+			try {
+				auth_img = await page.$eval(AUTHOR_IMG, el => el.src);
 			}
-			return para;
-		});
-		console.log("Page: "+i + " -> Done");
-		dataArray.push({
-			id: listLink[i].id,
-			link: listLink[i].link,
-			head,
-			author,
-			date: date.trim(),
-			read: read.trim(),
-			auth_img,
-			cover_img,
-			text,
-		});
-		await page.close();
+			catch (e) {
+				auth_img = "";
+				// console.log(e);
+			}
+			try {
+				cover_img = await page.$eval(COVER_IMG, el => el.src);
+			}
+			catch (e) {
+				cover_img = "";
+				// console.log(e);
+			}
+			let text = await page.$$eval(TEXT, el => {
+				let para = [];
+				for (let i = 0; i < el.length; i++) {
+					para.push({
+						id: "text-" + (i + 1),
+						value: el[i].textContent,
+					});
+				}
+				return para;
+			});
+			console.log("Page: " + (i + 1) + " -> Done");
+			dataArray.push({
+				id: listLink[i].id,
+				link: listLink[i].link,
+				head,
+				author,
+				date: date.trim(),
+				read: read.trim(),
+				auth_img,
+				cover_img,
+				text,
+			});
+			await page.close();
+		}
+		catch (e) {
+			console.log(listLink[i].link);
+			// console.log(e);
+		}
 	}
 	await browserLink.close();
 
