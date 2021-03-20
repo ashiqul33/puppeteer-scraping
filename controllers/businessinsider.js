@@ -99,7 +99,7 @@ async function listPageScrapB(listLink, pages) {
 
   fs.writeFile("./output/businessinsider.json", JSON.stringify(dataArray), function (err) {
     if (err) return console.log(err);
-    console.log(`medium ${listLink.length} page done...`);
+    console.log(`businessinsider ${listLink.length} page done...`);
   });
   return dataArray;
 }
