@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Medium & Business Insider Data Scraping</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div class="p-4">
+      <fieldset class="border_pad col-3 m-auto align-content-center">
+        <legend class="col-4 pl-4">Medium</legend>
+        <form class="m-1" method="GET" id="medium-scrap">
+          <div class="form-group">
+            <label for="medium-page-count">Number of Post</label>
+            <input
+              type="number"
+              class="form-control"
+              id="medium-page-count"
+              placeholder="Enter Number"
+            />
+          </div>
+          <input type="submit" value="Submit" class="btn btn-primary" />
+        </form>
+      </fieldset>
+    </div>
+
+    <div class="p-4">
+      <fieldset class="border_pad col-3 m-auto align-content-center">
+        <legend class="col-7 pl-4">Business Insider</legend>
+        <form class="m-1" method="GET" id="bsinsider-scrap">
+          <div class="form-group">
+            <label for="medium-page-count">Number of Post</label>
+            <input
+              type="number"
+              class="form-control"
+              id="bsinsider-page-count"
+              placeholder="Enter Number"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </fieldset>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"
+      defer
+    ></script>
+    <style>
+      fieldset.border_pad {
+        padding: 11px 30px 20px 30px;
+        border: 2px solid #4340cf;
+        border-radius: 2px;
+      }
+    </style>
+    <script>
+      const form_medium = document.getElementById("medium-scrap");
+      form_medium.addEventListener("submit", (e) => {
+        e.preventDefault();
+        let value = document.getElementById("medium-page-count").value;
+
+        axios
+          .get(`http://127.0.0.1:8000/api/medium/${value}`)
+          .then((res) => {
+            document.querySelector("body").innerText = JSON.stringify(res.data, null, 2);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+      });
+
+      const bsinsider_scrap = document.getElementById("bsinsider-scrap");
+      bsinsider_scrap.addEventListener("submit", (e) => {
+        e.preventDefault();
+        let value = document.getElementById("bsinsider-page-count").value;
+
+        axios
+          .get(`http://127.0.0.1:8000/api/businessinsider/${value}`)
+          .then((res) => {
+            document.querySelector("body").innerText = JSON.stringify(res.data, null, 2);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+      });
+    </script>
+  </body>
+</html>
