@@ -9,7 +9,13 @@ async function businessinsider(req, res) {
   try {
     const page = await startPage(browser);
     await page.goto("https://www.businessinsider.com/latest", { waitUntil: "networkidle2" });
-    await autoScroll(page);
+    if (pages > 18) {
+      let len = pages - 18;
+      for (let i = 0; i < len; i += 15) {
+        if (i == 0) await page.$eval("#l-content > a", btn => btn.click());
+        await autoScroll(page);
+      }
+    }
 
     const LINK_QUERY = "#l-content > section.river-item.featured-post > section > div.tout-text-wrapper.default-tout > h2 > a";
     listLink = await page.$$eval(LINK_QUERY, elements => {
@@ -42,10 +48,10 @@ async function listPageScrapB(listLink, pages) {
   let browserLink = await startBrowser();
 
   let dataArray = [];
-  const HEAD_LINK = "#l-main-content > section > section > section.post-headline-wrapper > h1";
+  const TITLE_LINK = "#l-main-content > section > section > section.post-headline-wrapper > h1";
   const AUTHOR_LINK = "#l-main-content > section > section > section.byline-wrapper.col-12 > div > div > div > div > div.byline-author.headline-bold";
   const DATE_LINK = "#l-main-content > section > section > section.byline-wrapper.col-12 > div > div > div > div > div.byline-timestamp.headline-regular.js-date-format.js-rendered";
-  const COVER_IMG = "#l-content > section > div > article > figure > div > img";
+  const POST_IMG = "#l-content > section > div > article > figure > div > img";
   const TEXT = "#piano-inline-content-wrapper > div > div > p";
   for (let i = 0; i < listLink.length; i++) {
     try {
@@ -53,15 +59,15 @@ async function listPageScrapB(listLink, pages) {
       await page.goto(listLink[i].link, { waitUntil: "networkidle2" });
 
       // -------- find data from visited page --------- //
-      let head = await page.$eval(HEAD_LINK, el => el.textContent.trim());
+      let title = await page.$eval(TITLE_LINK, el => el.textContent.trim());
       let author = await page.$eval(AUTHOR_LINK, el => el.innerText.trim());
       let date = new Date(await page.$eval(DATE_LINK, el => el.dataset.timestamp));
-      let cover_img;
+      let post_img;
       try {
-        cover_img = await page.$eval(COVER_IMG, el => el.src);
+        post_img = await page.$eval(POST_IMG, el => el.src);
       }
       catch (e) {
-        cover_img = "";
+        post_img = "";
         // console.log(e);
       }
       let text = await page.$$eval(TEXT, el => {
@@ -81,18 +87,18 @@ async function listPageScrapB(listLink, pages) {
       dataArray.push({
         id: listLink[i].id,
         link: listLink[i].link,
-        head,
+        title,
         author,
         date,
-        cover_img,
+        post_img,
         text,
       });
       await page.close();
     }
     catch (e) {
-      console.log(listLink[i].link);
+      // console.log(listLink[i].link);
       // await page.close();
-      // console.log(e);
+      console.log(e);
     }
   }
   await browserLink.close();
@@ -105,19 +111,18 @@ async function listPageScrapB(listLink, pages) {
 }
 
 async function autoScroll(page) {
-  await page.$eval("#l-content > a", btn => btn.click());
   await page.evaluate(async () => {
     await new Promise((resolve, reject) => {
       let distance = 300;
       let count = 0;
       let timer = setInterval(() => {
         window.scrollBy(0, distance);
-        if (count > 400) {
+        if (count > 10) {
           clearInterval(timer);
           resolve();
         }
         count++;
-      }, 20);
+      }, 100);
     });
   });
 }

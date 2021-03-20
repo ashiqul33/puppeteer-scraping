@@ -3,13 +3,18 @@ const { startPage } = require("./page");
 const fs = require('fs');
 
 async function medium(req, res) {
-	var pages = req.params.pages;
+	const pages = req.params.pages;
 	let listLink = [];
 	let browser = await startBrowser();
 	try {
 		const page = await startPage(browser);
 		await page.goto("https://medium.com", { waitUntil: "networkidle2" });
-		await autoScroll(page);
+		if (pages > 23) {
+			let len = pages - 23;
+			for (let i = 0; i < len; i++) {
+				await autoScroll(page);
+			}
+		}
 
 		const LINK_QUERY = `#root > div > div.an.do > div.ev.z.ih.ii.ij > div > div > div > div.r.s.t.u > div > div.z > div.af.dn > div > div > div > a`;
 		listLink = await page.$$eval(LINK_QUERY, elements => {
@@ -40,23 +45,23 @@ async function listPageScrapM(listLink, pages) {
 	let browserLink = await startBrowser();
 
 	let dataArray = [];
-	const HEAD_LINK = "#root > div > div.s > article > div > section > div > div > div h1";
+	const TITLE_LINK = "#root > div > div.s > article > div > section > div > div > div h1";
 	const AUTHOR_LINK = "#root > div > div.s > article > div > section > div > div span a";
 	const DATE_READ_LINK = "#root > div > div.s > article > div > section > div > div > div > div > div > div > div > span";
 	const AUTHOR_IMG = "#root > div > div.s > article > div > section > div > div > div > div > div > div.o.n > div > a img";
-	const COVER_IMG = "#root > div > div.s > article > div > section > div figure div.s > img";
+	const POST_IMG = "#root > div > div > article > div > section > div figure div > img";
 	const TEXT = "#root > div > div.s > article > div > section > div > div > p";
 	for (let i = 0; i < listLink.length; i++) {
 		try {
 			const page = await startPage(browserLink);
 			await page.goto(listLink[i].link, { waitUntil: "networkidle2" });
-			let head = await page.$eval(HEAD_LINK, el => el.textContent.trim());
+			let title = await page.$eval(TITLE_LINK, el => el.textContent.trim());
 
 			// -------- find data from visited page --------- //
 			let author = await page.$eval(AUTHOR_LINK, el => el.textContent.trim());
 			let date_read = await page.$eval(DATE_READ_LINK, el => el.textContent.trim());
 			let [date, read] = date_read.split("·");
-			let auth_img, cover_img;
+			let auth_img, post_img;
 			try {
 				auth_img = await page.$eval(AUTHOR_IMG, el => el.src);
 			}
@@ -65,10 +70,10 @@ async function listPageScrapM(listLink, pages) {
 				// console.log(e);
 			}
 			try {
-				cover_img = await page.$eval(COVER_IMG, el => el.src);
+				post_img = await page.$eval(POST_IMG, el => el.src);
 			}
 			catch (e) {
-				cover_img = "";
+				post_img = "";
 				// console.log(e);
 			}
 			let text = await page.$$eval(TEXT, el => {
@@ -88,20 +93,20 @@ async function listPageScrapM(listLink, pages) {
 			dataArray.push({
 				id: listLink[i].id,
 				link: listLink[i].link,
-				head,
+				title,
 				author,
 				date: date.trim(),
 				read: read.trim(),
 				auth_img,
-				cover_img,
+				post_img,
 				text,
 			});
 			await page.close();
 		}
 		catch (e) {
-			console.log(listLink[i].link);
+			// console.log(listLink[i].link);
 			// await page.close();
-			// console.log(e);
+			console.log(e);
 		}
 	}
 	await browserLink.close();
@@ -116,16 +121,12 @@ async function listPageScrapM(listLink, pages) {
 async function autoScroll(page) {
 	await page.evaluate(async () => {
 		await new Promise((resolve, reject) => {
-			let distance = 150;
-			let count = 0;
 			let timer = setInterval(() => {
-				window.scrollBy(0, distance);
-				if (count > 500) {
-					clearInterval(timer);
-					resolve();
-				}
-				count++;
-			}, 20);
+				let scrollHeight = document.body.scrollHeight;
+				window.scrollBy(0, scrollHeight);
+				clearInterval(timer);
+				resolve();
+			}, 70);
 		});
 	});
 }
