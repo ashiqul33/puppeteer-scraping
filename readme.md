@@ -10,4 +10,5 @@ $ yarn install
 $ yarn start
 ```
 ## Output
-> In output folder find medium.json and businessinsider.json file
+> In output folder find medium.json and businessinsider.json file.
+> Also get output in browser after click submit.
